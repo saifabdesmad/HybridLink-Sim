@@ -8,11 +8,36 @@ services:
     container_name: hybridlink-vehicle
     environment:
       - VEHICLE_PORT=14560
-      - TARGET_HOST=gcs
-      - TARGET_PORT=14550
+      - TARGET_HOST=link-manager
+      - TARGET_PORT=14561
       - MAVLINK_SECRET_KEY=HybridLinkSimSecretKeyHeudiasyc!
     ports:
       - "14560:14560/udp"
+    networks:
+      - hybrid_net
+    restart: unless-stopped
+
+  link-manager:
+    build:
+      context: .
+      dockerfile: docker/link_manager.Dockerfile
+    container_name: hybridlink-link-manager
+    environment:
+      - GCS_HOST=gcs
+      - GCS_PORT=14550
+      - LINK_A_HOST=vehicle
+      - LINK_A_PORT=14560
+      - LINK_B_HOST=vehicle
+      - LINK_B_PORT=14560
+      - GCS_PROXY_PORT=14555
+      - LINK_A_LISTEN_PORT=14561
+      - LINK_B_LISTEN_PORT=14562
+    ports:
+      - "14555:14555/udp"
+      - "14561:14561/udp"
+      - "14562:14562/udp"
+    depends_on:
+      - vehicle
     networks:
       - hybrid_net
     restart: unless-stopped
@@ -24,14 +49,14 @@ services:
     container_name: hybridlink-gcs
     environment:
       - GCS_PORT=14550
-      - TARGET_HOST=vehicle
-      - TARGET_PORT=14560
+      - TARGET_HOST=link-manager
+      - TARGET_PORT=14555
       - MAVLINK_SECRET_KEY=HybridLinkSimSecretKeyHeudiasyc!
       - AUTO_MISSION=true
     ports:
       - "14550:14550/udp"
     depends_on:
-      - vehicle
+      - link-manager
     networks:
       - hybrid_net
     restart: unless-stopped
