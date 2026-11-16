@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hybridlink-sim"
+version = "0.1.0"
+description = "Simulation et évaluation d'une architecture de communication hybride, sécurisée et résiliente pour drone (MAVLink 2, failover, netem, sécurité STRIDE)"
+authors = [
+    {name = "Candidat Chercheur Heudiasyc"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+keywords = ["drone", "mavlink", "hybrid-communications", "failover", "cybersecurity", "netem", "heudiasyc"]
+
+dependencies = [
+    "pymavlink>=2.4.40",
+    "cryptography>=42.0.0",
+    "pydantic>=2.6.0",
+    "pyyaml>=6.0",
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "scipy>=1.12.0",
+    "matplotlib>=3.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0",
+    "mypy>=1.9.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+asyncio_mode = "auto"
+

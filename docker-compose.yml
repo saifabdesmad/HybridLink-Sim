@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  vehicle:
+    build:
+      context: .
+      dockerfile: docker/vehicle.Dockerfile
+    container_name: hybridlink-vehicle
+    environment:
+      - VEHICLE_PORT=14560
+      - TARGET_HOST=gcs
+      - TARGET_PORT=14550
+      - MAVLINK_SECRET_KEY=HybridLinkSimSecretKeyHeudiasyc!
+    ports:
+      - "14560:14560/udp"
+    networks:
+      - hybrid_net
+    restart: unless-stopped
+
+  gcs:
+    build:
+      context: .
+      dockerfile: docker/gcs.Dockerfile
+    container_name: hybridlink-gcs
+    environment:
+      - GCS_PORT=14550
+      - TARGET_HOST=vehicle
+      - TARGET_PORT=14560
+      - MAVLINK_SECRET_KEY=HybridLinkSimSecretKeyHeudiasyc!
+      - AUTO_MISSION=true
+    ports:
+      - "14550:14550/udp"
+    depends_on:
+      - vehicle
+    networks:
+      - hybrid_net
+    restart: unless-stopped
+
+networks:
+  hybrid_net:
+    driver: bridge
