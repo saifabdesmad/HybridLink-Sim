@@ -68,3 +68,4 @@ jobs:
           test -f data/plots/02_latency_percentiles.png
           test -f data/plots/03_security_comparison.png
           test -f data/plots/04_failover_recovery_distribution.png
+
