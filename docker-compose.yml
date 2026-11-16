@@ -17,6 +17,28 @@ services:
       - hybrid_net
     restart: unless-stopped
 
+  netem:
+    build:
+      context: .
+      dockerfile: docker/netem.Dockerfile
+    container_name: hybridlink-netem
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - VEHICLE_HOST=vehicle
+      - VEHICLE_PORT=14560
+      - LINK_A_PORT=14551
+      - LINK_B_PORT=14552
+      - SCENARIO=01_nominal
+    ports:
+      - "14551:14551/udp"
+      - "14552:14552/udp"
+    depends_on:
+      - vehicle
+    networks:
+      - hybrid_net
+    restart: unless-stopped
+
   link-manager:
     build:
       context: .
@@ -25,10 +47,10 @@ services:
     environment:
       - GCS_HOST=gcs
       - GCS_PORT=14550
-      - LINK_A_HOST=vehicle
-      - LINK_A_PORT=14560
-      - LINK_B_HOST=vehicle
-      - LINK_B_PORT=14560
+      - LINK_A_HOST=netem
+      - LINK_A_PORT=14551
+      - LINK_B_HOST=netem
+      - LINK_B_PORT=14552
       - GCS_PROXY_PORT=14555
       - LINK_A_LISTEN_PORT=14561
       - LINK_B_LISTEN_PORT=14562
@@ -37,7 +59,7 @@ services:
       - "14561:14561/udp"
       - "14562:14562/udp"
     depends_on:
-      - vehicle
+      - netem
     networks:
       - hybrid_net
     restart: unless-stopped

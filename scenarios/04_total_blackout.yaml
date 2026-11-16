@@ -1,0 +1,29 @@
+name: "04_total_blackout"
+description: "Coupure simultanee des deux liens de communication (brouillage RF complet ou zone blanche absolue). Verification du declenchement deterministe du Failsafe RTL."
+duration_sec: 20
+
+link_a:
+  name: "ExpressLRS"
+  latency_ms: 8.0
+  jitter_ms: 1.5
+  loss_percent: 0.1
+  bandwidth_kbps: 50
+  status: "UP"
+
+link_b:
+  name: "Cellular_4G"
+  latency_ms: 45.0
+  jitter_ms: 12.0
+  loss_percent: 1.5
+  bandwidth_kbps: 5000
+  status: "UP"
+
+events:
+  - time_s: 5.0
+    action: "total_blackout"
+    params:
+      status_a: "DOWN"
+      loss_a: 100.0
+      status_b: "DOWN"
+      loss_b: 100.0
+    description: "Perte totale des deux liens. Le drone doit passer en Failsafe RTL apres T=3.0s de silence (T <= 8.2s)."

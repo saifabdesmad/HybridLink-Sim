@@ -1,22 +1,21 @@
 name: "01_nominal"
 description: "Conditions nominales : Lien A (ExpressLRS) et Lien B (Cellulaire 4G) actifs et stables."
-duration_sec: 20
+duration_sec: 25
 
 link_a:
-  name: "ExpressLRS_Sim"
-  latency_ms: 8
-  jitter_ms: 2
+  name: "ExpressLRS"
+  latency_ms: 8.0
+  jitter_ms: 1.5
   loss_percent: 0.1
   bandwidth_kbps: 50
   status: "UP"
 
 link_b:
-  name: "Cellular_4G_Sim"
-  latency_ms: 45
-  jitter_ms: 15
-  loss_percent: 2.0
+  name: "Cellular_4G"
+  latency_ms: 45.0
+  jitter_ms: 12.0
+  loss_percent: 1.5
   bandwidth_kbps: 5000
   status: "UP"
 
 events: []
-

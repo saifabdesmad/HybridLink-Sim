@@ -1,0 +1,28 @@
+name: "05_congestion_link_b"
+description: "Saturation cellulaire sur le Lien B (bufferbloat, gigue elevee). Le routeur maintient le Lien A comme prioritaire absolu."
+duration_sec: 20
+
+link_a:
+  name: "ExpressLRS"
+  latency_ms: 8.0
+  jitter_ms: 1.5
+  loss_percent: 0.1
+  bandwidth_kbps: 50
+  status: "UP"
+
+link_b:
+  name: "Cellular_4G"
+  latency_ms: 45.0
+  jitter_ms: 12.0
+  loss_percent: 1.5
+  bandwidth_kbps: 5000
+  status: "UP"
+
+events:
+  - time_s: 4.0
+    action: "congest_link_b"
+    params:
+      latency_ms: 350.0
+      jitter_ms: 90.0
+      loss_percent: 15.0
+    description: "Saturation de l'antenne relais 4G. Le systeme ne doit pas basculer sur B et preserver A."

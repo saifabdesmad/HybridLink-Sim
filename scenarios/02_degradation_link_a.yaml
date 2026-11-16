@@ -1,0 +1,36 @@
+name: "02_degradation_link_a"
+description: "Degradation progressive du Lien A (ExpressLRS), declenchant le basculement automatique sur le Lien B."
+duration_sec: 25
+
+link_a:
+  name: "ExpressLRS"
+  latency_ms: 8.0
+  jitter_ms: 1.5
+  loss_percent: 0.1
+  bandwidth_kbps: 50
+  status: "UP"
+
+link_b:
+  name: "Cellular_4G"
+  latency_ms: 45.0
+  jitter_ms: 12.0
+  loss_percent: 1.5
+  bandwidth_kbps: 5000
+  status: "UP"
+
+events:
+  - time_s: 5.0
+    action: "update_link_a"
+    params:
+      latency_ms: 50.0
+      jitter_ms: 10.0
+      loss_percent: 6.0
+    description: "Premiere perturbation radio sur Lien A (distance/obstacles)"
+
+  - time_s: 10.0
+    action: "update_link_a"
+    params:
+      latency_ms: 150.0
+      jitter_ms: 30.0
+      loss_percent: 25.0
+    description: "Degradation severe Lien A -> Basculement attendu vers Lien B"
