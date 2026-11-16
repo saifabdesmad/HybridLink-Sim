@@ -18,3 +18,4 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
 CMD ["python", "-m", "src.metrics.main", "--runs", "30"]
+

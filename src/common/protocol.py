@@ -14,6 +14,8 @@ from typing import Any
 os.environ["MAVLINK20"] = "1"
 from pymavlink.dialects.v20 import ardupilotmega as mavlink2  # type: ignore
 
+__all__ = ["MavlinkCodec", "mavlink2"]
+
 logger = logging.getLogger(__name__)
 
 

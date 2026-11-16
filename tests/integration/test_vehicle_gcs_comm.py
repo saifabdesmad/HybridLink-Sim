@@ -19,7 +19,7 @@ async def test_gcs_vehicle_direct_handshake() -> None:
 
     # Brancher les callbacks de communication directe (boucle locale)
     vehicle.send_packet_callback = gcs.handle_incoming_frame
-    gcs.send_packet_callback = vehicle.handle_incoming_frame
+    gcs.send_packet_callback = lambda data: None if vehicle.handle_incoming_frame(data) else None
 
     # 1. Echange de Heartbeats
     hb_v = vehicle.generate_heartbeat()
@@ -64,12 +64,14 @@ async def test_failsafe_trigger_on_heartbeat_loss() -> None:
     # Armer et decoller
     vehicle.handle_incoming_frame(gcs.send_arm(True))
     vehicle.handle_incoming_frame(gcs.send_takeoff(10.0))
-    assert vehicle.state.flight_mode == FlightMode.GUIDED
+    initial_mode: FlightMode = vehicle.state.flight_mode
+    assert initial_mode == FlightMode.GUIDED
 
     # Simuler l'ecoulement du temps sans aucun heartbeat GCS
     await asyncio.sleep(1.2)
     vehicle.update_physics(0.1)
 
     # Le failsafe doit etre actif et le mode bascule en RTL
+    final_mode: FlightMode = vehicle.state.flight_mode
     assert vehicle.state.failsafe_active is True
-    assert vehicle.state.flight_mode == FlightMode.RTL
+    assert final_mode == FlightMode.RTL

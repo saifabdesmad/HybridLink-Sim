@@ -7,6 +7,7 @@ import logging
 import random
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -210,7 +211,7 @@ class MonteCarloEvaluator:
             ("09_attack_dos_SEC_ON", True),
         ]
 
-        detailed_rows: list[dict] = []
+        detailed_rows: list[dict[str, Any]] = []
 
         for scen_name, sec_enforced in scenarios_to_run:
             logger.info(f"Execution Monte Carlo: {scen_name} (Securite={'ON' if sec_enforced else 'OFF'})...")
