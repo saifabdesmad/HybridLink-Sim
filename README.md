@@ -1,6 +1,6 @@
 # HybridLink-Sim : Architecture de Communication Hybride, Sécurisée et Résiliente pour Drone
 
-[![CI](https://github.com/votre-nom/HybridLink-Sim/actions/workflows/ci.yml/badge.svg)](https://github.com/votre-nom/HybridLink-Sim/actions)
+[![CI](https://github.com/saifabdesmad/HybridLink-Sim/actions/workflows/ci.yml/badge.svg)](https://github.com/saifabdesmad/HybridLink-Sim/actions)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![MAVLink 2 Signed](https://img.shields.io/badge/protocol-MAVLink_2_HMAC--SHA256-orange.svg)](docs/mavlink_security.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
