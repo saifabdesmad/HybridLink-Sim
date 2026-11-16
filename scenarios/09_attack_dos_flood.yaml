@@ -1,0 +1,27 @@
+name: "09_attack_dos_flood"
+description: "Attaque par deni de service (DoS Flood) : envoi massif de paquets aleatoires (500 pkts/s) pour saturer le Lien A."
+duration_sec: 20
+
+link_a:
+  name: "ExpressLRS"
+  latency_ms: 8.0
+  jitter_ms: 1.5
+  loss_percent: 0.1
+  bandwidth_kbps: 50
+  status: "UP"
+
+link_b:
+  name: "Cellular_4G"
+  latency_ms: 45.0
+  jitter_ms: 12.0
+  loss_percent: 1.5
+  bandwidth_kbps: 5000
+  status: "UP"
+
+attack:
+  type: "dos"
+  trigger_time_s: 4.0
+  duration_s: 6.0
+  target: "link_manager"
+
+events: []

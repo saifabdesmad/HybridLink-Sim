@@ -11,6 +11,7 @@ services:
       - TARGET_HOST=link-manager
       - TARGET_PORT=14561
       - MAVLINK_SECRET_KEY=HybridLinkSimSecretKeyHeudiasyc!
+      - ENFORCE_SECURITY=true
     ports:
       - "14560:14560/udp"
     networks:
@@ -82,6 +83,25 @@ services:
     networks:
       - hybrid_net
     restart: unless-stopped
+
+  attacker:
+    build:
+      context: .
+      dockerfile: docker/attacker.Dockerfile
+    container_name: hybridlink-attacker
+    environment:
+      - TARGET_HOST=netem
+      - TARGET_PORT=14551
+      - ATTACK_TYPE=spoofing
+      - ATTACK_DELAY_SEC=8.0
+    depends_on:
+      - netem
+      - vehicle
+    networks:
+      - hybrid_net
+    profiles:
+      - attack
+    restart: "no"
 
 networks:
   hybrid_net:

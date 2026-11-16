@@ -1,7 +1,7 @@
 """Moteur de simulation de drone (Autopilot) MAVLink 2.
 
-Gere la dynamique de vol simplifiee, l'emission de telemetrie, l'execution des commandes
-et la machine a etats de securite (Failsafe).
+Gere la dynamique de vol simplifiee, l'emission de telemetrie, l'execution des commandes,
+la verification cryptographique et la machine a etats de securite (Failsafe).
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ import time
 from collections.abc import Callable
 
 from src.common.config import DEFAULT_CONFIG
+from src.common.crypto import MavlinkSecurityEngine, SecurityReport
 from src.common.models import FlightMode, VehicleState
 from src.common.protocol import MavlinkCodec, mavlink2
 
@@ -19,7 +20,7 @@ logger = logging.getLogger("hybridlink.vehicle")
 
 
 class SimulatedAutopilot:
-    """Simulateur de vecteur aerien avec dynamique physique et gestion MAVLink."""
+    """Simulateur de vecteur aerien avec dynamique physique et controle de securite MAVLink."""
 
     def __init__(
         self,
@@ -27,11 +28,22 @@ class SimulatedAutopilot:
         comp_id: int = DEFAULT_CONFIG.VEHICLE_COMPID,
         secret_key: bytes | None = DEFAULT_CONFIG.DEFAULT_SHARED_SECRET,
         failsafe_timeout_s: float = DEFAULT_CONFIG.FAILSAFE_TIMEOUT_SEC,
+        enforce_security: bool = True,
     ) -> None:
         self.sys_id = sys_id
         self.comp_id = comp_id
         self.failsafe_timeout_s = failsafe_timeout_s
-        self.codec = MavlinkCodec(sys_id, comp_id, secret_key=secret_key, link_id=1)
+        self.enforce_security = enforce_security
+
+        resolved_key = secret_key or DEFAULT_CONFIG.DEFAULT_SHARED_SECRET
+        self.codec = MavlinkCodec(sys_id, comp_id, secret_key=resolved_key, link_id=1)
+        if not enforce_security:
+            self.codec.disable_signing()
+        self.security_engine = MavlinkSecurityEngine(
+            secret_key=resolved_key,
+            enforce_security=enforce_security,
+        )
+
         self.state = VehicleState()
 
         # Coordonnees d'origine (Laboratoire Heudiasyc, Compiegne)
@@ -44,30 +56,53 @@ class SimulatedAutopilot:
         self.start_time = time.time()
         self.is_running = False
 
+        # Suivi d'audit de securite
+        self.fraudulent_commands_executed = 0
+        self.last_security_report: SecurityReport | None = None
+
         # Callback pour l'envoi de trames reseau
         self.send_packet_callback: Callable[[bytes], None] | None = None
 
-    def handle_incoming_frame(self, data: bytes) -> None:
-        """Traite une trame MAVLink recue."""
+    def handle_incoming_frame(self, data: bytes) -> bool:
+        """Traite une trame MAVLink recue apres validation cryptographique et anti-rejeu.
+
+        Retourne True si la trame est valide et traitee, False si rejetee.
+        """
+        # 1. Controle de Securite MAVLink 2 (HMAC + Fenetre anti-rejeu)
+        report = self.security_engine.verify_frame(data)
+        self.last_security_report = report
+
+        if not report.is_valid:
+            logger.warning(
+                f"[VEHICLE REJET SECURITE] {report.reason} "
+                f"(Rejeu={report.is_replayed}, Falsifie={report.is_tampered}, NonSigne={report.is_unsigned})"
+            )
+            self.state.rejected_commands_count += 1
+            return False
+
+        # 2. Decodage applicatif
         messages, errors = self.codec.decode_buffer(data)
 
         if errors:
             for err in errors:
-                logger.warning(f"[VEHICLE REJET] Trame rejetee: {err}")
+                logger.warning(f"[VEHICLE ERREUR PROTOCOLE] {err}")
                 self.state.rejected_commands_count += 1
+            return False
 
         for msg in messages:
             msg_type = msg.get_type()
             if msg_type == "HEARTBEAT":
-                # Battement de coeur recu de la GCS
                 self.state.last_gcs_heartbeat_time = time.time()
-                # Si le drone etait en failsafe et que le lien revient
                 if self.state.failsafe_active:
                     logger.info("[VEHICLE FAILSAFE CLEAR] Signal GCS retabli.")
-                    # On conserve RTL par securite jusqu'a nouvel ordre explicite
 
             elif msg_type == "COMMAND_LONG":
+                # Si la securite etait desactivee et qu'un attaquant a reussi a faire executer
+                if not self.enforce_security and (report.is_unsigned or report.link_id == 0):
+                    self.fraudulent_commands_executed += 1
                 self._process_command_long(msg)
+
+        return True
 
     def _process_command_long(self, cmd: mavlink2.MAVLink_command_long_message) -> None:
         """Traite une commande MAV_CMD."""
@@ -143,7 +178,6 @@ class SimulatedAutopilot:
             else:
                 self.state.vz = 0.0
         elif self.state.flight_mode in (FlightMode.RTL, FlightMode.LAND):
-            # Descente securisee
             if self.state.altitude_m > 0.0:
                 self.state.altitude_m = max(0.0, self.state.altitude_m - 1.0 * dt)
                 self.state.vz = -1.0
@@ -156,15 +190,15 @@ class SimulatedAutopilot:
 
         self.state.relative_altitude_m = self.state.altitude_m
 
-        # 3. Trajectoire circulaire douce si en vol
+        # 3. Trajectoire orbitale si en vol
         if self.state.armed and self.state.altitude_m > 1.0:
             elapsed = now - self.start_time
-            radius_deg = 0.0003  # ~30 metres
+            radius_deg = 0.0003
             self.state.latitude = self.home_lat + radius_deg * math.sin(elapsed * 0.2)
             self.state.longitude = self.home_lon + radius_deg * math.cos(elapsed * 0.2)
             self.state.yaw = math.fmod(elapsed * 10.0, 360.0)
 
-        # Batterie (decharge lente)
+        # Batterie
         if self.state.armed:
             self.state.battery_percent = max(0.0, self.state.battery_percent - 0.01 * dt)
 

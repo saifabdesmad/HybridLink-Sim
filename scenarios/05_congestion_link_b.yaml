@@ -26,3 +26,4 @@ events:
       jitter_ms: 90.0
       loss_percent: 15.0
     description: "Saturation de l'antenne relais 4G. Le systeme ne doit pas basculer sur B et preserver A."
+

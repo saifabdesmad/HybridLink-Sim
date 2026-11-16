@@ -34,3 +34,4 @@ events:
       jitter_ms: 1.5
       loss_percent: 0.1
     description: "Retablissement du Lien A -> Armement du timer d'hysterese (2.0s)"
+

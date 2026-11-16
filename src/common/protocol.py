@@ -45,8 +45,17 @@ class MavlinkCodec:
 
     def disable_signing(self) -> None:
         """Desactive la signature (mode non securise pour les tests d'attaque)."""
-        self.signing = None
-        self.mav.signing = None
+        self.signing = mavlink2.MAVLinkSigning()
+        self.signing.secret_key = None
+        self.signing.sign_outgoing = False
+        self.signing.allow_unsigned_callback = lambda mav, msgId: True
+        self.mav.signing = self.signing
+
+    def _ensure_monotonic_timestamp(self) -> None:
+        """Garantit un timestamp strictement croissant meme en cas d'appels consecutifs rapides."""
+        if self.signing:
+            current_time_ts = int((time.time() - 1420070400.0) * 100000)
+            self.signing.timestamp = max(self.signing.timestamp + 1, current_time_ts)
 
     def encode_heartbeat(
         self,
@@ -57,8 +66,7 @@ class MavlinkCodec:
         system_status: int = mavlink2.MAV_STATE_ACTIVE,
     ) -> bytes:
         """Encode un paquet HEARTBEAT (1 Hz)."""
-        if self.signing:
-            self.signing.timestamp = int((time.time() - 1420070400.0) * 100000)
+        self._ensure_monotonic_timestamp()
         msg = self.mav.heartbeat_encode(mav_type, autopilot, base_mode, custom_mode, system_status)
         return msg.pack(self.mav)  # type: ignore
 
@@ -73,8 +81,7 @@ class MavlinkCodec:
         yawspeed: float = 0.0,
     ) -> bytes:
         """Encode l'attitude angulaire du drone."""
-        if self.signing:
-            self.signing.timestamp = int((time.time() - 1420070400.0) * 100000)
+        self._ensure_monotonic_timestamp()
         msg = self.mav.attitude_encode(
             time_boot_ms, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed
         )
@@ -93,8 +100,7 @@ class MavlinkCodec:
         hdg_cdeg: int = 0,
     ) -> bytes:
         """Encode la position GPS globale (coordonnees entieres en 1e7 degres)."""
-        if self.signing:
-            self.signing.timestamp = int((time.time() - 1420070400.0) * 100000)
+        self._ensure_monotonic_timestamp()
         msg = self.mav.global_position_int_encode(
             time_boot_ms,
             int(lat_deg * 1e7),
@@ -123,8 +129,7 @@ class MavlinkCodec:
         param7: float = 0.0,
     ) -> bytes:
         """Encode une commande de vol (COMMAND_LONG)."""
-        if self.signing:
-            self.signing.timestamp = int((time.time() - 1420070400.0) * 100000)
+        self._ensure_monotonic_timestamp()
         msg = self.mav.command_long_encode(
             target_system,
             target_component,
@@ -144,8 +149,7 @@ class MavlinkCodec:
         self, command_id: int, result: int = mavlink2.MAV_RESULT_ACCEPTED
     ) -> bytes:
         """Encode l'accuse de reception d'une commande."""
-        if self.signing:
-            self.signing.timestamp = int((time.time() - 1420070400.0) * 100000)
+        self._ensure_monotonic_timestamp()
         msg = self.mav.command_ack_encode(command_id, result)
         return msg.pack(self.mav)  # type: ignore
 

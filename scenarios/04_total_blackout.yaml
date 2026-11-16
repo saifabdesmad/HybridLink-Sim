@@ -27,3 +27,4 @@ events:
       status_b: "DOWN"
       loss_b: 100.0
     description: "Perte totale des deux liens. Le drone doit passer en Failsafe RTL apres T=3.0s de silence (T <= 8.2s)."
+

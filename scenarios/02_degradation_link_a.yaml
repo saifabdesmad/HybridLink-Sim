@@ -34,3 +34,4 @@ events:
       jitter_ms: 30.0
       loss_percent: 25.0
     description: "Degradation severe Lien A -> Basculement attendu vers Lien B"
+
